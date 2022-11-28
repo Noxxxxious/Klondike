@@ -12,12 +12,22 @@ class Card:
         self.cover = pygame.transform.scale(pygame.image.load("images/cover.png"), (100, 140))
         self.image = self.face
         self.rect = self.image.get_rect()
-        self.revealed = True
+        self.isRevealed = True
+        self.isDocked = False
+        self.dock = None
 
     def flip(self):
-        if self.revealed:
+        if self.isRevealed:
             self.image = self.cover
-            self.revealed = False
+            self.isRevealed = False
         else:
             self.image = self.face
-            self.revealed = True
+            self.isRevealed = True
+
+    def undock(self):
+        self.isDocked = False
+        self.dock = None
+
+    def set_dock(self, dock):
+        self.isDocked = True
+        self.dock = dock
