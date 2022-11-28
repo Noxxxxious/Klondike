@@ -8,6 +8,7 @@ class CardDock(CardContainer):
         self.rank = 0
 
     def place(self, card):
+        card.rect.x, card.rect.y = self.rect.x, self.rect.y
         if not self.cards:
             self.suit = card.suit
         self.cards.append(card)

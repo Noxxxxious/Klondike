@@ -15,6 +15,8 @@ class Card:
         self.isRevealed = True
         self.isDocked = False
         self.dock = None
+        self.isColumn = False
+        self.column = None
 
     def flip(self):
         if self.isRevealed:
@@ -24,10 +26,18 @@ class Card:
             self.image = self.face
             self.isRevealed = True
 
+    def set_dock(self, dock):
+        self.isDocked = True
+        self.dock = dock
+
     def undock(self):
         self.isDocked = False
         self.dock = None
 
-    def set_dock(self, dock):
-        self.isDocked = True
-        self.dock = dock
+    def set_column(self, column):
+        self.isColumn = True
+        self.column = column
+
+    def reset_column(self):
+        self.isColumn = False
+        self.column = None
