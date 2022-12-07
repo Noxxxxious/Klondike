@@ -9,6 +9,7 @@ class CardDock(CardContainer):
 
     def place(self, card):
         card.rect.x, card.rect.y = self.rect.x, self.rect.y
+        card.prev_rect = card.rect.copy()
         if not self.cards:
             self.suit = card.suit
         self.cards.append(card)

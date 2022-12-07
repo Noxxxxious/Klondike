@@ -12,4 +12,12 @@ def number_to_rank(number):
     return "unidentified card"
 
 
+def suit_to_color(suit):
+    if suit in ("clubs", "spades"):
+        return "black"
+    if suit in ("hearts", "diamonds"):
+        return "red"
+    return "unknown"
+
+
 

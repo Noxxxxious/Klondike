@@ -9,10 +9,13 @@ class CardColumn(CardContainer):
         self.front_rect = pygame.Rect(self.rect)
 
     def place(self, card):
+        if self.cards:
+            self.front_rect.y += 20
         card.rect.x, card.rect.y = self.front_rect.x, self.front_rect.y
+        card.prev_rect = card.rect.copy()
         self.cards.append(card)
-        self.front_rect.y += 20
 
     def lift(self):
         self.cards.pop()
-        self.front_rect.y -= 20
+        if self.cards:
+            self.front_rect.y -= 20

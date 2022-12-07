@@ -63,12 +63,6 @@ class Klondike:
                 card_to_drag = card
         if card_to_drag is None:
             return
-        if card_to_drag.isDocked:
-            card_to_drag.dock.lift()
-            card_to_drag.undock()
-        if card_to_drag.isColumn:
-            card_to_drag.column.lift()
-            card_to_drag.reset_column()
         self.float_card(card_to_drag)
         self.dragged_card = card_to_drag
 
@@ -78,18 +72,19 @@ class Klondike:
             if card.rect.collidepoint(pos):
                 card_to_dock = card
         if card_to_dock is None:
-            return
+            return False
         if card_to_dock.isDocked:
-            return
-        if card_to_dock.isColumn:
-            card_to_dock.column.lift()
-            card_to_dock.reset_column()
+            return False
         for dock in self.docks:
             if card_to_dock.number == dock.rank + 1 and (card_to_dock.suit == dock.suit or dock.suit is None):
+                if card_to_dock.isColumn:
+                    card_to_dock.column.lift()
+                    card_to_dock.reset_column()
                 card_to_dock.set_dock(dock)
                 dock.place(card_to_dock)
                 self.float_card(card_to_dock)
-                return
+                return True
+        return False
 
     def try_put_to_column(self, pos):
         card_to_column = None
@@ -97,17 +92,28 @@ class Klondike:
             if card.rect.collidepoint(pos):
                 card_to_column = card
         if card_to_column is None:
-            return
+            return False
         for column in self.columns:
             if column.front_rect.collidepoint(pos):
+                if card_to_column.isDocked:
+                    card_to_column.dock.lift()
+                    card_to_column.undock()
+                if card_to_column.isColumn:
+                    card_to_column.column.lift()
+                    card_to_column.reset_column()
                 card_to_column.set_column(column)
                 column.place(card_to_column)
+                return True
+        return False
 
     def drop_card(self, pos):
+        card_transported = False
         for dock in self.docks:
             if dock.rect.collidepoint(pos):
-                self.try_dock_card(pos)
-        self.try_put_to_column(pos)
+                card_transported = self.try_dock_card(pos)
+        card_transported = card_transported or self.try_put_to_column(pos)
+        if not card_transported:
+            self.dragged_card.rect = self.dragged_card.prev_rect.copy()
         self.dragged_card = None
 
     def float_card(self, card):

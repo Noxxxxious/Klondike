@@ -1,5 +1,6 @@
 import pygame
 from utils.helpers import number_to_rank
+from utils.helpers import suit_to_color
 
 
 class Card:
@@ -7,11 +8,13 @@ class Card:
         self.number = number
         self.rank = number_to_rank(number)
         self.suit = suit
+        self.color = suit_to_color(suit)
         self.name = self.rank + "_of_" + suit
         self.face = pygame.transform.scale(pygame.image.load(f"images/{self.name}.png"), (100, 140))
         self.cover = pygame.transform.scale(pygame.image.load("images/cover.png"), (100, 140))
         self.image = self.face
         self.rect = self.image.get_rect()
+        self.prev_rect = self.rect.copy()
         self.isRevealed = True
         self.isDocked = False
         self.dock = None
