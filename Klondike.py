@@ -7,6 +7,7 @@ from CardDock import CardDock
 from CardColumn import CardColumn
 from CardStack import CardStack
 
+
 class Klondike:
     def __init__(self):
         self.deck = list()
@@ -94,7 +95,10 @@ class Klondike:
         if card_to_column is None:
             return False
         for column in self.columns:
-            if column.front_rect.collidepoint(pos):
+            if not column.front_rect.collidepoint(pos):
+                continue
+            if (not column.cards and card_to_column.rank == "king") \
+                    or (column.cards and column.cards[-1].number == card_to_column.number + 1 and column.cards[-1].color != card_to_column.color):
                 if card_to_column.isDocked:
                     card_to_column.dock.lift()
                     card_to_column.undock()
@@ -103,6 +107,8 @@ class Klondike:
                     card_to_column.reset_column()
                 card_to_column.set_column(column)
                 column.place(card_to_column)
+                for col in self.columns:
+                    print(col.cards)
                 return True
         return False
 
