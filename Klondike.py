@@ -39,6 +39,7 @@ class Klondike:
             self.columns[i].place(self.deck[start + i])
         for i in range(start + 7, len(self.deck)):
             self.stack.place(self.deck[i])
+            self.deck[i].flip()
 
     def draw(self):
         pygame.draw.rect(self.window.screen, self.stack.color, self.stack.rect)
