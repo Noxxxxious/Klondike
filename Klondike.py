@@ -9,35 +9,41 @@ from CardStack import CardStack
 
 
 class Klondike:
+    NUM_RANKS = 13
+    NUM_COLUMNS = 7
+    NUM_DOCKS = 4
+    BACKGROUND_COLOR = (20, 20, 20)
+    CONTAINER_OFFSET = 150
+    HITBOX_MARGIN = 70
+
     def __init__(self):
         self.deck = list()
         self.generate_new_deck()
         self.window = GameWindow()
         self.running = True
         self.dragged_card = None
-        self.docks = [CardDock(550, 50), CardDock(700, 50), CardDock(850, 50), CardDock(1000, 50)]
-        self.columns = [CardColumn(100, 240), CardColumn(250, 240), CardColumn(400, 240), CardColumn(550, 240),
-                        CardColumn(700, 240), CardColumn(850, 240), CardColumn(1000, 240)]
+        self.docks = [CardDock(550 + i * self.CONTAINER_OFFSET, 50) for i in range(self.NUM_DOCKS)]
+        self.columns = [CardColumn(100 + i * self.CONTAINER_OFFSET, 240) for i in range(self.NUM_COLUMNS)]
         self.stack = CardStack(100, 50)
         self.deal_game()
 
     def generate_new_deck(self):
         suits = ["hearts", "diamonds", "spades", "clubs"]
         for suit in suits:
-            for number in range(1, 14):
+            for number in range(1, self.NUM_RANKS + 1):
                 self.deck.append(Card(number, suit))
         random.shuffle(self.deck)
 
     def deal_game(self):
         start = 0
-        for i in range(7):
+        for i in range(self.NUM_COLUMNS):
             for j in range(start, start + i):
                 self.columns[i].place(self.deck[j])
                 self.deck[j].flip()
             start += i
-        for i in range(7):
+        for i in range(self.NUM_COLUMNS):
             self.columns[i].place(self.deck[start + i])
-        for i in range(start + 7, len(self.deck)):
+        for i in range(start + self.NUM_COLUMNS, len(self.deck)):
             self.stack.place(self.deck[i])
             self.deck[i].flip()
 
@@ -69,7 +75,7 @@ class Klondike:
                         self.drop_card(pygame.mouse.get_pos())
                 elif event.type == pygame.MOUSEMOTION and self.dragged_card is not None:
                     self.dragged_card.rect.move_ip(event.rel)
-            self.window.screen.fill((20, 20, 20))
+            self.window.screen.fill(self.BACKGROUND_COLOR)
             self.draw()
             pygame.display.update()
         pygame.quit()
@@ -77,7 +83,7 @@ class Klondike:
     def lift_card(self, pos):
         card_to_drag = None
         for card in self.deck:
-            if card.rect.collidepoint(pos):
+            if card.rect.collidepoint(pos) and card.isRevealed:
                 card_to_drag = card
         if card_to_drag is None:
             return
@@ -89,9 +95,7 @@ class Klondike:
         for card in self.deck:
             if card.rect.collidepoint(pos):
                 card_to_dock = card
-        if card_to_dock is None:
-            return False
-        if card_to_dock.isDocked:
+        if card_to_dock is None or card_to_dock.isDocked or not card_to_dock.isRevealed:
             return False
         for dock in self.docks:
             if card_to_dock.number == dock.rank + 1 and (card_to_dock.suit == dock.suit or dock.suit is None):
@@ -105,15 +109,9 @@ class Klondike:
                 return True
         return False
 
-    def try_put_to_column(self, pos):
-        card_to_column = None
-        for card in self.deck:
-            if card.rect.collidepoint(pos):
-                card_to_column = card
-        if card_to_column is None:
-            return False
+    def try_put_to_column(self, pos, card_to_column):
         for column in self.columns:
-            if not column.front_rect.collidepoint(pos):
+            if not self.collision(pos, column.front_rect, self.HITBOX_MARGIN, 200):
                 continue
             if (not column.cards and card_to_column.rank == "king") \
                     or (column.cards and column.cards[-1].number == card_to_column.number + 1 and column.cards[-1].color != card_to_column.color):
@@ -132,9 +130,9 @@ class Klondike:
     def drop_card(self, pos):
         card_transported = False
         for dock in self.docks:
-            if dock.rect.collidepoint(pos):
+            if self.collision(pos, dock.rect):
                 card_transported = self.try_dock_card(pos)
-        card_transported = card_transported or self.try_put_to_column(pos)
+        card_transported = card_transported or self.try_put_to_column(pos, self.dragged_card)
         if not card_transported:
             self.dragged_card.rect = self.dragged_card.prev_rect.copy()
         self.dragged_card = None
@@ -153,6 +151,11 @@ class Klondike:
                 card.rect.x -= 150
                 self.stack.cards.append(self.stack.table_cards.pop())
                 self.float_card(card)
+
+    def collision(self, pos, rect, margin_x=HITBOX_MARGIN, margin_y=HITBOX_MARGIN):
+        inflated_rect = rect.copy()
+        inflated_rect = inflated_rect.inflate(margin_x, margin_y)
+        return True if inflated_rect.collidepoint(pos) else False
 
     def float_card(self, card):
         self.deck.append(card)
