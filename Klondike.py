@@ -19,13 +19,26 @@ class Klondike:
         self.columns = [CardColumn(100, 240), CardColumn(250, 240), CardColumn(400, 240), CardColumn(550, 240),
                         CardColumn(700, 240), CardColumn(850, 240), CardColumn(1000, 240)]
         self.stack = CardStack(100, 50)
+        self.deal_game()
 
     def generate_new_deck(self):
         suits = ["hearts", "diamonds", "spades", "clubs"]
         for suit in suits:
             for number in range(1, 14):
                 self.deck.append(Card(number, suit))
-        # random.shuffle(self.deck)
+        random.shuffle(self.deck)
+
+    def deal_game(self):
+        start = 0
+        for i in range(7):
+            for j in range(start, start + i):
+                self.columns[i].place(self.deck[j])
+                self.deck[j].flip()
+            start += i
+        for i in range(7):
+            self.columns[i].place(self.deck[start + i])
+        for i in range(start + 7, len(self.deck)):
+            self.stack.place(self.deck[i])
 
     def draw(self):
         pygame.draw.rect(self.window.screen, self.stack.color, self.stack.rect)
@@ -44,7 +57,10 @@ class Klondike:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     if pygame.mouse.get_pressed()[0]:
-                        self.lift_card(pos)
+                        if self.stack.rect.collidepoint(pygame.mouse.get_pos()):
+                            self.cycle_stack()
+                        else:
+                            self.lift_card(pos)
                     elif pygame.mouse.get_pressed()[2]:
                         self.try_dock_card(pos)
                 elif event.type == pygame.MOUSEBUTTONUP:
@@ -81,7 +97,8 @@ class Klondike:
                 if card_to_dock.isColumn:
                     card_to_dock.column.lift()
                     card_to_dock.reset_column()
-                card_to_dock.set_dock(dock)
+                if card_to_dock.isStack:
+                    self.stack.remove_card(card_to_dock)
                 dock.place(card_to_dock)
                 self.float_card(card_to_dock)
                 return True
@@ -105,10 +122,9 @@ class Klondike:
                 if card_to_column.isColumn:
                     card_to_column.column.lift()
                     card_to_column.reset_column()
-                card_to_column.set_column(column)
+                if card_to_column.isStack:
+                    self.stack.remove_card(card_to_column)
                 column.place(card_to_column)
-                for col in self.columns:
-                    print(col.cards)
                 return True
         return False
 
@@ -121,6 +137,21 @@ class Klondike:
         if not card_transported:
             self.dragged_card.rect = self.dragged_card.prev_rect.copy()
         self.dragged_card = None
+
+    def cycle_stack(self):
+        if self.stack.cards:
+            top_card = self.stack.cards[-1]
+            self.stack.table_cards.append(self.stack.cards.pop())
+            top_card.flip()
+            top_card.rect.x += 150
+            top_card.prev_rect = top_card.rect.copy()
+            self.float_card(top_card)
+        else:
+            for card in reversed(self.stack.table_cards):
+                card.flip()
+                card.rect.x -= 150
+                self.stack.cards.append(self.stack.table_cards.pop())
+                self.float_card(card)
 
     def float_card(self, card):
         self.deck.append(card)

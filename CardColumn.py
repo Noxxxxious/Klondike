@@ -13,9 +13,11 @@ class CardColumn(CardContainer):
             self.front_rect.y += 20
         card.rect.x, card.rect.y = self.front_rect.x, self.front_rect.y
         card.prev_rect = card.rect.copy()
+        card.set_column(self)
         self.cards.append(card)
 
     def lift(self):
         self.cards.pop()
         if self.cards:
             self.front_rect.y -= 20
+            self.cards[-1].flip()

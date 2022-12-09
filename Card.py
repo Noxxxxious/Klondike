@@ -20,6 +20,7 @@ class Card:
         self.dock = None
         self.isColumn = False
         self.column = None
+        self.isStack = False
 
     def flip(self):
         if self.isRevealed:
