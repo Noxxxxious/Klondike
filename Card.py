@@ -45,3 +45,6 @@ class Card:
     def reset_column(self):
         self.isColumn = False
         self.column = None
+
+    def print(self):
+        print(self.rank + self.suit[0], end=" ")
