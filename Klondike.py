@@ -1,13 +1,14 @@
 import time
 import pygame
 import random
-import threading
 
 from Card import Card
 from GameWindow import GameWindow
 from CardDock import CardDock
 from CardColumn import CardColumn
 from CardStack import CardStack
+
+pygame.init()
 
 
 class Klondike:
@@ -24,10 +25,8 @@ class Klondike:
         self.deck = list()
         self.generate_new_deck()
         self.window = GameWindow()
-        self.running = True
         self.dragged_cards = list()
         self.docks = [CardDock(550 + i * self.CONTAINER_OFFSET, 50) for i in range(self.NUM_DOCKS)]
-        self.docked_card_count = 0
         self.columns = [CardColumn(100 + i * self.CONTAINER_OFFSET, 240) for i in range(self.NUM_COLUMNS)]
         self.stack = CardStack(100, 50)
 
@@ -37,6 +36,7 @@ class Klondike:
                 self.deck.append(Card(number, suit))
 
     def deal_game(self):
+        random.shuffle(self.deck)
         start = 0
         for i in range(self.NUM_COLUMNS):
             for j in range(start, start + i):
@@ -49,6 +49,11 @@ class Klondike:
             self.stack.place(self.deck[i])
             self.deck[i].flip()
 
+    def testing_deal(self):
+        self.deck.reverse()
+        for _ in range(self.NUM_CARDS - 1):
+            self.try_dock_card((0, 0))
+
     def draw(self):
         pygame.draw.rect(self.window.screen, self.stack.color, self.stack.rect)
         for dock in self.docks:
@@ -59,25 +64,21 @@ class Klondike:
             self.window.screen.blit(card.image, card.rect)
 
     def run(self):
-        while True:
-            self.running = True
-            random.shuffle(self.deck)
-            self.deal_game()
-            while self.running:
-                if self.docked_card_count != self.NUM_CARDS:
-                    self.handle_game_event()
-                else:
-                    game_end_thread = threading.Thread(target=self.animate_game_ending())
-                    game_end_thread.start()
-                self.window.screen.fill(self.BACKGROUND_COLOR)
-                self.draw()
-                pygame.display.update()
-            self.__init__()
+        self.testing_deal()
+        while not self.game_over():
+            self.handle_game_event()
+            self.window.screen.fill(self.BACKGROUND_COLOR)
+            self.draw()
+            pygame.display.update()
+        t_start = time.time()
+        while time.time() - t_start < 5:
+            self.animate_game_ending()
 
     def handle_game_event(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.running = False
+                pygame.quit()
+                exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 if pygame.mouse.get_pressed()[0]:
@@ -93,7 +94,13 @@ class Klondike:
             elif event.type == pygame.MOUSEMOTION and self.dragged_cards:
                 for card in self.dragged_cards:
                     card.rect.move_ip(event.rel)
-
+    
+    def game_over(self):
+        for dock in self.docks:
+            if len(dock.cards) != self.NUM_RANKS:
+                return False
+        return True
+        
     def lift_card(self, pos):
         for card in self.deck:
             if card.rect.collidepoint(pos) and card.is_face_up:
@@ -118,21 +125,19 @@ class Klondike:
                 if card_to_dock.isStack:
                     self.stack.remove_card(card_to_dock)
                 dock.place(card_to_dock)
-                self.docked_card_count += 1
                 self.float_cards([card_to_dock])
                 return True
         return False
 
     def try_put_to_column(self, pos, card_to_column):
         for column in self.columns:
-            if not self.collision(pos, column.front_rect, self.HITBOX_MARGIN, 200):
+            if not self.mouse_rect_collision(pos, column.front_rect, self.HITBOX_MARGIN, 200):
                 continue
             if (not column.cards and card_to_column.rank == "king") \
                     or (column.cards and column.cards[-1].number == card_to_column.number + 1 and column.cards[-1].color != card_to_column.color):
                 if card_to_column.isDocked:
                     card_to_column.dock.lift()
                     card_to_column.undock()
-                    self.docked_card_count -= 1
                 if card_to_column.isColumn:
                     card_to_column.column.lift(self.dragged_cards)
                 if card_to_column.isStack:
@@ -145,7 +150,7 @@ class Klondike:
     def drop_card(self, pos):
         card_transported = False
         for dock in self.docks:
-            if self.collision(pos, dock.rect):
+            if self.mouse_rect_collision(pos, dock.rect):
                 card_transported = self.try_dock_card(pos)
         card_transported = card_transported or self.try_put_to_column(pos, self.dragged_cards[0])
         if not card_transported:
@@ -168,7 +173,8 @@ class Klondike:
                 self.stack.cards.append(self.stack.table_cards.pop())
                 self.float_cards([card])
 
-    def collision(self, pos, rect, margin_x=HITBOX_MARGIN, margin_y=HITBOX_MARGIN):
+    @staticmethod
+    def mouse_rect_collision(pos, rect, margin_x=HITBOX_MARGIN, margin_y=HITBOX_MARGIN):
         inflated_rect = rect.copy()
         inflated_rect = inflated_rect.inflate(margin_x, margin_y)
         return True if inflated_rect.collidepoint(pos) else False
@@ -179,11 +185,9 @@ class Klondike:
             self.deck.remove(card)
 
     def animate_game_ending(self):
-        pass
-        # start_t = time.time()
-        # y_speed = -1
-        # while time.time() - start_t < 5:
-        #     for dock in self.docks:
-        #         for card in dock.cards:
-        #             card.rect.y += y_speed
-        self.running = False
+        for dock in self.docks:
+            for card in dock.cards:
+                card.rect.y += 3
+        for card in self.deck:
+            self.window.screen.blit(card.image, card.rect)
+        pygame.display.update()
