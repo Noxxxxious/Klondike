@@ -30,13 +30,11 @@ class Klondike:
         self.docked_card_count = 0
         self.columns = [CardColumn(100 + i * self.CONTAINER_OFFSET, 240) for i in range(self.NUM_COLUMNS)]
         self.stack = CardStack(100, 50)
-        self.deal_game()
 
     def generate_new_deck(self):
         for suit in self.SUITS:
             for number in range(1, self.NUM_RANKS + 1):
                 self.deck.append(Card(number, suit))
-        # random.shuffle(self.deck)
 
     def deal_game(self):
         start = 0
@@ -61,16 +59,20 @@ class Klondike:
             self.window.screen.blit(card.image, card.rect)
 
     def run(self):
-        while self.running:
-            if self.docked_card_count != self.NUM_CARDS:
-                self.handle_game_event()
-            else:
-                game_end_thread = threading.Thread(target=self.animate_game_ending())
-                game_end_thread.start()
-            self.window.screen.fill(self.BACKGROUND_COLOR)
-            self.draw()
-            pygame.display.update()
-        pygame.quit()
+        while True:
+            self.running = True
+            random.shuffle(self.deck)
+            self.deal_game()
+            while self.running:
+                if self.docked_card_count != self.NUM_CARDS:
+                    self.handle_game_event()
+                else:
+                    game_end_thread = threading.Thread(target=self.animate_game_ending())
+                    game_end_thread.start()
+                self.window.screen.fill(self.BACKGROUND_COLOR)
+                self.draw()
+                pygame.display.update()
+            self.__init__()
 
     def handle_game_event(self):
         for event in pygame.event.get():
@@ -94,7 +96,7 @@ class Klondike:
 
     def lift_card(self, pos):
         for card in self.deck:
-            if card.rect.collidepoint(pos) and card.isRevealed:
+            if card.rect.collidepoint(pos) and card.is_face_up:
                 if card.isColumn:
                     self.dragged_cards = card.column.get_children(card)
                 else:
@@ -106,7 +108,8 @@ class Klondike:
         for card in self.deck:
             if card.rect.collidepoint(pos):
                 card_to_dock = card
-        if card_to_dock is None or card_to_dock.isDocked or not card_to_dock.isRevealed:
+        if (card_to_dock is None or (card_to_dock.isDocked or not card_to_dock.is_face_up)) \
+                or (card_to_dock.isColumn and card_to_dock.prev_rect != card_to_dock.column.front_rect):
             return False
         for dock in self.docks:
             if card_to_dock.number == dock.rank + 1 and (card_to_dock.suit == dock.suit or dock.suit is None):
@@ -183,4 +186,4 @@ class Klondike:
         #     for dock in self.docks:
         #         for card in dock.cards:
         #             card.rect.y += y_speed
-        # self.running = False
+        self.running = False

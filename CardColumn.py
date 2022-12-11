@@ -10,18 +10,20 @@ class CardColumn(CardContainer):
 
     def place(self, cards):
         for card in cards:
+            if self.cards:
+                self.front_rect.y += 20
             card.rect.x, card.rect.y = self.front_rect.x, self.front_rect.y
             card.prev_rect = card.rect.copy()
             card.set_column(self)
-            self.front_rect.y += 20
             self.cards.append(card)
 
     def lift(self, cards):
         for card in cards:
             self.cards.remove(card)
             card.reset_column()
-            self.front_rect.y -= 20
-        if self.cards and not self.cards[-1].isRevealed:
+            if self.cards:
+                self.front_rect.y -= 20
+        if self.cards and not self.cards[-1].is_face_up:
             self.cards[-1].flip()
 
     def get_children(self, card):

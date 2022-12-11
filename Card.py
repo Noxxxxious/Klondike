@@ -15,7 +15,7 @@ class Card:
         self.image = self.face
         self.rect = self.image.get_rect()
         self.prev_rect = self.rect.copy()
-        self.isRevealed = True
+        self.is_face_up = True
         self.isDocked = False
         self.dock = None
         self.isColumn = False
@@ -23,12 +23,12 @@ class Card:
         self.isStack = False
 
     def flip(self):
-        if self.isRevealed:
+        if self.is_face_up:
             self.image = self.cover
-            self.isRevealed = False
+            self.is_face_up = False
         else:
             self.image = self.face
-            self.isRevealed = True
+            self.is_face_up = True
 
     def set_dock(self, dock):
         self.isDocked = True
