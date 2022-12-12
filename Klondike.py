@@ -31,8 +31,8 @@ class Klondike:
         self.stack = CardStack(100, 50)
 
     def generate_new_deck(self):
-        for suit in self.SUITS:
-            for number in range(1, self.NUM_RANKS + 1):
+        for number in range(1, self.NUM_RANKS + 1):
+            for suit in self.SUITS:
                 self.deck.append(Card(number, suit))
 
     def deal_game(self):
@@ -70,9 +70,8 @@ class Klondike:
             self.window.screen.fill(self.BACKGROUND_COLOR)
             self.draw()
             pygame.display.update()
-        t_start = time.time()
-        while time.time() - t_start < 5:
-            self.animate_game_ending()
+        self.animate_game_ending()
+
 
     def handle_game_event(self):
         for event in pygame.event.get():
@@ -185,9 +184,26 @@ class Klondike:
             self.deck.remove(card)
 
     def animate_game_ending(self):
-        for dock in self.docks:
-            for card in dock.cards:
-                card.rect.y += 3
-        for card in self.deck:
-            self.window.screen.blit(card.image, card.rect)
-        pygame.display.update()
+        for i in reversed(range(self.NUM_RANKS)):
+            for j, dock in enumerate(self.docks):
+                g = 0.5
+                vel_x = - random.randint(4, 10)
+                if j in [0, 1] and random.randint(0, 2) == 2:
+                    vel_x = - vel_x
+                vel_y = - random.randint(4, 8)
+                while 0 - dock.cards[i].rect.w < dock.cards[i].rect.x < self.window.w:
+                    dock.cards[i].rect.x += vel_x
+                    dock.cards[i].rect.y += vel_y
+                    vel_y += g
+                    if dock.cards[i].rect.y + dock.cards[i].rect.h > self.window.h:
+                        dock.cards[i].rect.y = self.window.h - dock.cards[i].rect.h
+                        vel_y = - vel_y * 2/3
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            exit()
+                    self.window.screen.blit(dock.cards[i].image, dock.cards[i].rect)
+                    pygame.display.update()
+                    time.sleep(0.01)
+                dock.cards.pop()
+
