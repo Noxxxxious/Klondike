@@ -20,7 +20,7 @@ class Klondike:
     CONTAINER_OFFSET = 150
     HITBOX_MARGIN = 70
     SUITS = ["hearts", "diamonds", "spades", "clubs"]
-    FPS = 60
+    FPS = 120
 
     def __init__(self):
         self.deck = list()
@@ -72,7 +72,7 @@ class Klondike:
             self.window.screen.fill(self.BACKGROUND_COLOR)
             self.draw()
             pygame.display.update()
-            self.fps_clock.tick()
+            self.fps_clock.tick(self.FPS)
         self.animate_game_ending()
 
     def handle_game_event(self):
