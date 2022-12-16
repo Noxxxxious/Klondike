@@ -20,6 +20,7 @@ class Klondike:
     CONTAINER_OFFSET = 150
     HITBOX_MARGIN = 70
     SUITS = ["hearts", "diamonds", "spades", "clubs"]
+    FPS = 60
 
     def __init__(self):
         self.deck = list()
@@ -29,6 +30,7 @@ class Klondike:
         self.docks = [CardDock(550 + i * self.CONTAINER_OFFSET, 50) for i in range(self.NUM_DOCKS)]
         self.columns = [CardColumn(100 + i * self.CONTAINER_OFFSET, 240) for i in range(self.NUM_COLUMNS)]
         self.stack = CardStack(100, 50)
+        self.fps_clock = pygame.time.Clock()
 
     def generate_new_deck(self):
         for number in range(1, self.NUM_RANKS + 1):
@@ -64,14 +66,14 @@ class Klondike:
             self.window.screen.blit(card.image, card.rect)
 
     def run(self):
-        self.testing_deal()
+        self.deal_game()
         while not self.game_over():
             self.handle_game_event()
             self.window.screen.fill(self.BACKGROUND_COLOR)
             self.draw()
             pygame.display.update()
+            self.fps_clock.tick()
         self.animate_game_ending()
-
 
     def handle_game_event(self):
         for event in pygame.event.get():
