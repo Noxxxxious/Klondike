@@ -127,8 +127,9 @@ class Klondike:
         for dock in self.docks:
             if card_to_dock.number == dock.rank + 1 and (card_to_dock.suit == dock.suit or dock.suit is None):
                 if card_to_dock.column:
-                    self.move_history.append(MoveLog("column-to-dock", card_to_dock, dock, card_to_dock.column))
-                    card_to_dock.column.lift([card_to_dock])
+                    dest = card_to_dock.column
+                    flip = card_to_dock.column.lift([card_to_dock])
+                    self.move_history.append(MoveLog("column-to-dock", card_to_dock, dest, dock, flip))
                 elif card_to_dock.isStack:
                     self.move_history.append(MoveLog("stack-to-dock", card_to_dock, dock, None))
                     self.stack.remove_card(card_to_dock)
@@ -202,7 +203,10 @@ class Klondike:
             return
         move_data = self.move_history.pop()
         if move_data.tag == "column-to-dock":
-            print("column to dock")
+            if move_data.dest.cards and move_data.flip:
+                move_data.dest.cards[-1].flip()
+            move_data.source.lift()
+            move_data.dest.place([move_data.card])
         elif move_data.tag == "stack-to-dock":
             print("stack to dock")
         elif move_data.tag == "column-to-column":
@@ -212,6 +216,7 @@ class Klondike:
             move_data.source.lift(cards)
             for card in cards:
                 move_data.dest.place([card])
+            self.float_cards(cards)
         elif move_data.tag == "stack-to-column":
             print("stack to column")
         elif move_data.tag == "dock-to-column":
