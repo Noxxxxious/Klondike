@@ -25,6 +25,8 @@ class CardColumn(CardContainer):
                 self.front_rect.y -= 20
         if self.cards and not self.cards[-1].is_face_up:
             self.cards[-1].flip()
+            return True
+        return False
 
     def get_children(self, card):
         try:
