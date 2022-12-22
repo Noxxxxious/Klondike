@@ -14,13 +14,13 @@ class CardColumn(CardContainer):
                 self.front_rect.y += 20
             card.rect.x, card.rect.y = self.front_rect.x, self.front_rect.y
             card.prev_rect = card.rect.copy()
-            card.set_column(self)
+            card.column = self
             self.cards.append(card)
 
     def lift(self, cards):
         for card in cards:
             self.cards.remove(card)
-            card.reset_column()
+            card.column = None
             if self.cards:
                 self.front_rect.y -= 20
         if self.cards and not self.cards[-1].is_face_up:

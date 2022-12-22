@@ -16,9 +16,7 @@ class Card:
         self.rect = self.image.get_rect()
         self.prev_rect = self.rect.copy()
         self.is_face_up = True
-        self.isDocked = False
         self.dock = None
-        self.isColumn = False
         self.column = None
         self.isStack = False
 
@@ -29,22 +27,6 @@ class Card:
         else:
             self.image = self.face
             self.is_face_up = True
-
-    def set_dock(self, dock):
-        self.isDocked = True
-        self.dock = dock
-
-    def undock(self):
-        self.isDocked = False
-        self.dock = None
-
-    def set_column(self, column):
-        self.isColumn = True
-        self.column = column
-
-    def reset_column(self):
-        self.isColumn = False
-        self.column = None
 
     def print(self):
         print(self.rank + self.suit[0], end=" ")

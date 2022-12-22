@@ -20,7 +20,7 @@ class Klondike:
     CONTAINER_OFFSET = 150
     HITBOX_MARGIN = 70
     SUITS = ["hearts", "diamonds", "spades", "clubs"]
-    FPS = 120
+    FPS = 240
 
     def __init__(self):
         self.deck = list()
@@ -30,6 +30,7 @@ class Klondike:
         self.docks = [CardDock(550 + i * self.CONTAINER_OFFSET, 50) for i in range(self.NUM_DOCKS)]
         self.columns = [CardColumn(100 + i * self.CONTAINER_OFFSET, 240) for i in range(self.NUM_COLUMNS)]
         self.stack = CardStack(100, 50)
+        self.move_history = list()
         self.fps_clock = pygame.time.Clock()
 
     def generate_new_deck(self):
@@ -95,6 +96,8 @@ class Klondike:
             elif event.type == pygame.MOUSEMOTION and self.dragged_cards:
                 for card in self.dragged_cards:
                     card.rect.move_ip(event.rel)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_b:
+                self.undo_move()
     
     def game_over(self):
         for dock in self.docks:
@@ -105,7 +108,7 @@ class Klondike:
     def lift_card(self, pos):
         for card in self.deck:
             if card.rect.collidepoint(pos) and card.is_face_up:
-                if card.isColumn:
+                if card.column:
                     self.dragged_cards = card.column.get_children(card)
                 else:
                     self.dragged_cards = [card]
@@ -116,14 +119,16 @@ class Klondike:
         for card in self.deck:
             if card.rect.collidepoint(pos):
                 card_to_dock = card
-        if (card_to_dock is None or (card_to_dock.isDocked or not card_to_dock.is_face_up)) \
-                or (card_to_dock.isColumn and card_to_dock.prev_rect != card_to_dock.column.front_rect):
+        if (card_to_dock is None or (card_to_dock.dock or not card_to_dock.is_face_up)) \
+                or (card_to_dock.column and card_to_dock.prev_rect != card_to_dock.column.front_rect):
             return False
         for dock in self.docks:
             if card_to_dock.number == dock.rank + 1 and (card_to_dock.suit == dock.suit or dock.suit is None):
-                if card_to_dock.isColumn:
+                if card_to_dock.column:
+                    self.move_history.append(("column-to-dock", card_to_dock, dock, card_to_dock.column))
                     card_to_dock.column.lift([card_to_dock])
-                if card_to_dock.isStack:
+                elif card_to_dock.isStack:
+                    self.move_history.append(("stack-to-dock", card_to_dock, dock, None))
                     self.stack.remove_card(card_to_dock)
                 dock.place(card_to_dock)
                 self.float_cards([card_to_dock])
@@ -136,12 +141,14 @@ class Klondike:
                 continue
             if (not column.cards and card_to_column.rank == "king") \
                     or (column.cards and column.cards[-1].number == card_to_column.number + 1 and column.cards[-1].color != card_to_column.color):
-                if card_to_column.isDocked:
+                if card_to_column.dock:
+                    self.move_history.append(("dock-to-column", card_to_column, card_to_column.dock, column))
                     card_to_column.dock.lift()
-                    card_to_column.undock()
-                if card_to_column.isColumn:
+                if card_to_column.column:
+                    self.move_history.append(("column-to-column", card_to_column, card_to_column.column, column))
                     card_to_column.column.lift(self.dragged_cards)
                 if card_to_column.isStack:
+                    self.move_history.append(("stack-to-column", card_to_column, None, column))
                     self.stack.remove_card(card_to_column)
                 for card in self.dragged_cards:
                     column.place([card])
@@ -167,12 +174,14 @@ class Klondike:
             top_card.rect.x += 150
             top_card.prev_rect = top_card.rect.copy()
             self.float_cards([top_card])
+            self.move_history.append(("stack-cycle", top_card))
         else:
             for card in reversed(self.stack.table_cards):
                 card.flip()
                 card.rect.x -= 150
                 self.stack.cards.append(self.stack.table_cards.pop())
                 self.float_cards([card])
+            self.move_history.append(("stack-reset", None))
 
     @staticmethod
     def mouse_rect_collision(pos, rect, margin_x=HITBOX_MARGIN, margin_y=HITBOX_MARGIN):
@@ -184,6 +193,25 @@ class Klondike:
         for card in cards:
             self.deck.append(card)
             self.deck.remove(card)
+
+    def undo_move(self):
+        if not self.move_history:
+            return
+        move_data = self.move_history.pop()
+        if move_data[0] == "column-to-dock":
+            print("column to dock")
+        elif move_data[0] == "stack-to-dock":
+            print("stack to dock")
+        elif move_data[0] == "column-to-column":
+            print("col to col")
+        elif move_data[0] == "stack-to-column":
+            print("stack to column")
+        elif move_data[0] == "dock-to-column":
+            print("dock-to-column")
+        elif move_data[0] == "stack-cycle":
+            print("stack cycle")
+        elif move_data[0] == "stack-reset":
+            print("stack reset")
 
     def animate_game_ending(self):
         for i in reversed(range(self.NUM_RANKS)):
@@ -208,4 +236,3 @@ class Klondike:
                     pygame.display.update()
                     time.sleep(0.01)
                 dock.cards.pop()
-

@@ -10,14 +10,15 @@ class CardDock(CardContainer):
     def place(self, card):
         card.rect.x, card.rect.y = self.rect.x, self.rect.y
         card.prev_rect = card.rect.copy()
-        card.set_dock(self)
+        card.dock = self
         if not self.cards:
             self.suit = card.suit
         self.cards.append(card)
         self.rank += 1
 
     def lift(self):
-        self.cards.pop()
+        card = self.cards.pop()
+        card.dock = None
         if not self.cards:
             self.suit = None
         self.rank -= 1
