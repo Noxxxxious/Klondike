@@ -207,6 +207,7 @@ class Klondike:
                 move_data.dest.cards[-1].flip()
             move_data.source.lift()
             move_data.dest.place([move_data.card])
+            self.float_cards([move_data.card])
         elif move_data.tag == "stack-to-dock":
             print("stack to dock")
         elif move_data.tag == "column-to-column":
