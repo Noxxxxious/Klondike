@@ -98,8 +98,11 @@ class Klondike:
             elif event.type == pygame.MOUSEMOTION and self.dragged_cards:
                 for card in self.dragged_cards:
                     card.rect.move_ip(event.rel)
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_b:
-                self.undo_move()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_b:
+                    self.undo_move()
+                if event.key == pygame.K_r:
+                    self.restart()
     
     def game_over(self):
         for dock in self.docks:
@@ -250,3 +253,7 @@ class Klondike:
                     pygame.display.update()
                     time.sleep(0.01)
                 dock.cards.pop()
+
+    def restart(self):
+        self.__init__()
+        self.deal_game()
