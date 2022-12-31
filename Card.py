@@ -1,6 +1,19 @@
 import pygame
-from utils.helpers import number_to_rank
-from utils.helpers import suit_to_color
+import sys
+import os
+from helpers import number_to_rank
+from helpers import suit_to_color
+
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 
 class Card:
