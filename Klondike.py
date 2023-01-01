@@ -130,9 +130,9 @@ class Klondike:
         for dock in self.docks:
             if card_to_dock.number == dock.rank + 1 and (card_to_dock.suit == dock.suit or dock.suit is None):
                 if card_to_dock.column:
-                    dest = card_to_dock.column
+                    source = card_to_dock.column
                     flip = card_to_dock.column.lift([card_to_dock])
-                    self.move_history.append(MoveLog("column-to-dock", card_to_dock, dest, dock, flip))
+                    self.move_history.append(MoveLog("column-to-dock", card_to_dock, dock, source, flip))
                 elif card_to_dock.isStack:
                     self.move_history.append(MoveLog("stack-to-dock", card_to_dock, dock, None))
                     self.stack.remove_card(card_to_dock)
@@ -148,15 +148,15 @@ class Klondike:
             if (not column.cards and card_to_column.rank == "king") \
                     or (column.cards and column.cards[-1].number == card_to_column.number + 1 and column.cards[-1].color != card_to_column.color):
                 if card_to_column.dock:
-                    dest = card_to_column.dock
+                    source = card_to_column.dock
                     card_to_column.dock.lift()
-                    self.move_history.append(MoveLog("dock-to-column", card_to_column, dest, column))
+                    self.move_history.append(MoveLog("dock-to-column", card_to_column, column, source))
                 if card_to_column.column:
-                    dest = card_to_column.column
+                    source = card_to_column.column
                     flip = card_to_column.column.lift(self.dragged_cards)
-                    self.move_history.append(MoveLog("column-to-column", card_to_column, dest, column, flip))
+                    self.move_history.append(MoveLog("column-to-column", card_to_column, column, source, flip))
                 if card_to_column.isStack:
-                    self.move_history.append(MoveLog("stack-to-column", card_to_column, None, column))
+                    self.move_history.append(MoveLog("stack-to-column", card_to_column, column, None))
                     self.stack.remove_card(card_to_column)
                 for card in self.dragged_cards:
                     column.place([card])
@@ -207,10 +207,10 @@ class Klondike:
             return
         move_data = self.move_history.pop()
         if move_data.tag == "column-to-dock":
-            if move_data.dest.cards and move_data.flip:
-                move_data.dest.cards[-1].flip()
-            move_data.source.lift()
-            move_data.dest.place([move_data.card])
+            if move_data.source.cards and move_data.flip:
+                move_data.source.cards[-1].flip()
+            move_data.dest.lift()
+            move_data.source.place([move_data.card])
             self.float_cards([move_data.card])
         elif move_data.tag == "stack-to-dock":
             move_data.dest.lift()
@@ -220,22 +220,22 @@ class Klondike:
             move_data.card.prev_rect = move_data.card.rect.copy()
             self.float_cards([move_data.card])
         elif move_data.tag == "column-to-column":
-            if move_data.dest.cards and move_data.flip:
-                move_data.dest.cards[-1].flip()
-            cards = move_data.source.get_children(move_data.card)
-            move_data.source.lift(cards)
+            if move_data.source.cards and move_data.flip:
+                move_data.source.cards[-1].flip()
+            cards = move_data.dest.get_children(move_data.card)
+            move_data.dest.lift(cards)
             for card in cards:
-                move_data.dest.place([card])
+                move_data.source.place([card])
             self.float_cards(cards)
         elif move_data.tag == "stack-to-column":
-            move_data.source.lift([move_data.card])
+            move_data.dest.lift([move_data.card])
             self.stack.place(move_data.card)
             self.stack.table_cards.append(self.stack.cards.pop())
             move_data.card.rect.x += 150
             move_data.card.prev_rect = move_data.card.rect.copy()
         elif move_data.tag == "dock-to-column":
-            move_data.source.lift([move_data.card])
-            move_data.dest.place(move_data.card)
+            move_data.dest.lift([move_data.card])
+            move_data.source.place(move_data.card)
         elif move_data.tag == "stack-cycle":
             move_data.card.flip()
             move_data.card.rect.x -= 150
@@ -243,7 +243,12 @@ class Klondike:
             self.float_cards([move_data.card])
         elif move_data.tag == "stack-reset":
             for _ in range(len(self.stack.cards)):
-                self.cycle_stack()
+                top_card = self.stack.cards[-1]
+                self.stack.table_cards.append(self.stack.cards.pop())
+                top_card.flip()
+                top_card.rect.x += 150
+                top_card.prev_rect = top_card.rect.copy()
+                self.float_cards([top_card])
 
     def animate_game_ending(self):
         for i in reversed(range(self.NUM_RANKS)):
